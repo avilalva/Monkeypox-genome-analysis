@@ -1,5 +1,6 @@
 library("seqinr")
 library("plotly")
+library(htmlwidgets)
 monkey <- read.fasta(file = "Monkeypox.fasta")
 monkeyseq <- monkey[[1]] #Putting sequence in vector
 
@@ -35,7 +36,31 @@ for(i in 1:n){
   print(chunkGC)
   chunkGCs[i]<- chunkGC
 }
-data<- data.frame(starts,chunkGCs)
-plot(starts,chunkGCs,type="b",xlab="Nucleotide start position",ylab="GC content")
-fig <- plot_ly(data, x = "Nucleotide_start_position", y = "GC content", type = 'scatter', mode = 'lines')
+data <- data.frame(Nucleotide_Start_Position = starts, GC_Content = chunkGCs)
+fig <- plot_ly(data, x = ~Nucleotide_Start_Position, y = ~GC_Content, type = 'scatter', mode = 'lines')
 fig
+html_file_path <- "GC_content_plot.html"
+saveWidget(fig, file = html_file_path, selfcontained = TRUE)
+
+
+##Sliding window plot using function
+slidingwindowplot <- function(windowsize, inputseq)
+{
+  starts <- seq(1, length(inputseq)-windowsize, by = windowsize)
+  n <- length(starts)    # Find the length of the vector "starts"
+  chunkGCs <- numeric(n) # Make a vector of the same length as vector "starts", but just containing zeroes
+  for (i in 1:n) {
+    chunk <- inputseq[starts[i]:(starts[i]+windowsize-1)]
+    chunkGC <- GC(chunk)
+    print(chunkGC)
+    chunkGCs[i] <- chunkGC
+  }
+  data <- data.frame(Nucleotide_Start_Position = starts, GC_Content = chunkGCs)
+  fig <- plot_ly(data, x = ~Nucleotide_Start_Position, y = ~GC_Content, type = 'scatter', mode = 'lines',line=list(color='red'))
+  fig
+  html_file_path <- "GC_content_plot_function.html"
+  saveWidget(fig, file = html_file_path, selfcontained = TRUE)
+}
+slidingwindowplot(500,monkeyseq)
+
+
